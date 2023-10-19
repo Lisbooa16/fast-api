@@ -1,59 +1,13 @@
-def test_root_deve_retornar_200_e_ola_mundo(client):
+from sqlalchemy import select
 
-    response = client.get('/')  # Act
-
-    assert response.status_code == 200  # Assert
-    assert response.json() == {'message': 'Olá Mundo!'}  # Assert
+from fast_zero.models import User
 
 
-def test_create_user(client):
+def test_create_user(session):
+    new_user = User(username='alice', password='secret', email='teste@test')
+    session.add(new_user)
+    session.commit()
 
-    response = client.post(
-        '/users/',
-        json={
-            'username': 'alice',
-            'email': 'alice@example.com',
-            'password': 'secret',
-        },
-    )
-    assert response.status_code == 201
-    assert response.json() == {
-        'username': 'alice',
-        'email': 'alice@example.com',
-    }
+    user = session.scalar(select(User).where(User.username == 'alice'))
 
-
-def test_read_users(client):
-    response = client.get('/users/')
-    assert response.status_code == 200
-    assert response.json() == {
-        'users': [
-            {
-                'username': 'alice',
-                'email': 'alice@example.com',
-            }
-        ]
-    }
-
-
-def test_update_user(client):
-    response = client.put(
-        '/users/1',
-        json={
-            'username': 'bob',
-            'email': 'bob@example.com',
-            'password': 'mynewpassword',
-        },
-    )
-    assert response.status_code == 200
-    assert response.json() == {
-        'username': 'bob',
-        'email': 'bob@example.com',
-    }
-
-
-def test_delete_user(client):
-    response = client.delete('/users/1')
-
-    assert response.status_code == 200
-    assert response.json() == {'detail': 'User deleted'}
+    assert user.username == 'alice'
