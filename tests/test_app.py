@@ -1,13 +1,23 @@
-from sqlalchemy import select
-
-from fast_zero.models import User
+from fast_zero.schemas import UserPublic
 
 
-def test_create_user(session):
-    new_user = User(username='alice', password='secret', email='teste@test')
-    session.add(new_user)
-    session.commit()
+def test_create_user(client):
+    response = client.post(
+        '/users',
+        json={
+            'username': 'alice',
+            'email': 'alice@example.com',
+            'password': 'secret',
+        },
+    )
+    assert response.status_code == 201
+    assert response.json() == {
+        'username': 'alice',
+        'email': 'alice@example.com',
+    }
 
-    user = session.scalar(select(User).where(User.username == 'alice'))
 
-    assert user.username == 'alice'
+def test_read_users(client, user):
+    user_schema = UserPublic.model_validate(user).model_dump()
+    response = client.get('/users/')
+    assert response.json() == {'users': [user_schema]}
